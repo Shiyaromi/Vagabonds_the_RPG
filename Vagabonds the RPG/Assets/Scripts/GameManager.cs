@@ -35,7 +35,8 @@ public class GameManager : MonoBehaviour
 
             if (hit.collider != null)
             {
-                if (currentTarget != null) currentTarget.DeSelect();
+                if (currentTarget != null) 
+                    currentTarget.DeSelect();
 
                 currentTarget = hit.collider.GetComponent<NPC>();
 

@@ -7,17 +7,17 @@ using UnityEngine;
 [RequireComponent(typeof(Animator))]
 public abstract class Character : MonoBehaviour // Az abstract megakadályozza azt, hogy ne húzd rá semmire véletlenül ezt a scriptet
 {
-    [SerializeField] protected float speed;
+    [SerializeField] private float speed;
 
     [SerializeField] private float initHealth;
 
-    protected Animator myAnimator;
+    public Animator MyAnimator { get; set; }
 
-    protected Vector2 direction;
+    private Vector2 direction;
 
     private Rigidbody2D myRigidbody;
 
-    protected bool isAttacking;
+    public bool IsAttacking { get; set; }
 
     protected Coroutine attackRoutine;
 
@@ -34,16 +34,19 @@ public abstract class Character : MonoBehaviour // Az abstract megakadályozza az
     {
         get
         {
-            return direction.x != 0 || direction.y != 0;
+            return Direction.x != 0 || Direction.y != 0;
         }
     }
+
+    public Vector2 Direction { get => direction; set => direction = value; }
+    public float Speed { get => speed; set => speed = value; }
 
     protected virtual void Awake()
     {
         health.Initialize(initHealth, initHealth);
 
         myRigidbody = GetComponent<Rigidbody2D>();
-        myAnimator = GetComponent<Animator>();
+        MyAnimator = GetComponent<Animator>();
     }
 
     protected virtual void Start()
@@ -63,7 +66,7 @@ public abstract class Character : MonoBehaviour // Az abstract megakadályozza az
 
     public void Move()
     {
-        myRigidbody.velocity = direction.normalized * speed; // ez mozgatja a karaktereket
+        myRigidbody.velocity = Direction.normalized * Speed; // ez mozgatja a karaktereket
     }
 
     public void HandleLayers()
@@ -72,40 +75,28 @@ public abstract class Character : MonoBehaviour // Az abstract megakadályozza az
         {
             ActivateLayer("WalkLayer"); // ez a mozgás animáció
 
-            myAnimator.SetFloat("x", direction.x);
-            myAnimator.SetFloat("y", direction.y);
-
-            StopAttack();
+            MyAnimator.SetFloat("x", Direction.x);
+            MyAnimator.SetFloat("y", Direction.y);
         }
 
-        else if (isAttacking) ActivateLayer("AttackLayer");
+        else if (IsAttacking) ActivateLayer("AttackLayer");
         else ActivateLayer("IdleLayer"); // ez vált vissza az idle-re
     }
 
     public void ActivateLayer(string layerName)
     {
-        for (int i = 0; i < myAnimator.layerCount; i++)
+        for (int i = 0; i < MyAnimator.layerCount; i++)
         {
-            myAnimator.SetLayerWeight(i, 0);
+            MyAnimator.SetLayerWeight(i, 0);
         }
 
-        myAnimator.SetLayerWeight(myAnimator.GetLayerIndex(layerName), 1);
-    }
-
-    public virtual void StopAttack()
-    {
-        if (attackRoutine != null)
-        {
-            StopCoroutine(attackRoutine);
-            isAttacking = false;
-            myAnimator.SetBool("attack", isAttacking);
-        }
+        MyAnimator.SetLayerWeight(MyAnimator.GetLayerIndex(layerName), 1);
     }
 
     public virtual void TakeDamage(float damage)
     {
         health.MyCurrentValue -= damage;
 
-        if (health.MyCurrentValue <= 0) myAnimator.SetTrigger("die"); // DIE
+        if (health.MyCurrentValue <= 0) MyAnimator.SetTrigger("die"); // DIE
     }
 }

@@ -9,11 +9,31 @@ public class Enemy : NPC
 
     private Transform target;
 
+    private IState currentState;
+
+    public float MyAttackRange { get; set; }
+
+    public float MyAttackTime { get; set; }
+
     public Transform Target { get => target; set => target = value; }
+
+    protected override void Awake()
+    {
+        MyAttackRange = 1.5f;
+
+        ChangeState(new IdleState());
+
+        base.Awake();
+    }
 
     protected override void Update()
     {
-        FollowTarget();
+        if (!IsAttacking)
+        {
+            MyAttackTime += Time.deltaTime;
+        }
+
+        currentState.Update();
 
         base.Update();
     }
@@ -39,11 +59,15 @@ public class Enemy : NPC
 		OnHealthChanged(health.MyCurrentValue);
 	}
 
-    private void FollowTarget()
+    public void ChangeState(IState newState)
     {
-        if (target!= null)
+        if (currentState != null)
         {
-            transform.position = Vector2.MoveTowards(transform.position, target.position, speed * Time.deltaTime);
+            currentState.Exit();
         }
+
+        currentState = newState;
+
+        currentState.Enter(this);
     }
 }

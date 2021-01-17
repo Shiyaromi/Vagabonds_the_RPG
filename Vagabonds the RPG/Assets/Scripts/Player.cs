@@ -44,20 +44,22 @@ public class Player : Character
 
     private void GetInput()
     {
-        direction = Vector2.zero;
+        Direction = Vector2.zero;
 
         if (Input.GetKeyDown(KeyCode.I)) health.MyCurrentValue -= 10;
         if (Input.GetKeyDown(KeyCode.O)) health.MyCurrentValue += 10;
 
-        if (Input.GetKey(KeyCode.W)) direction += Vector2.up;
-        if (Input.GetKey(KeyCode.A)) direction += Vector2.left;
-        if (Input.GetKey(KeyCode.S)) direction += Vector2.down;
-        if (Input.GetKey(KeyCode.D)) direction += Vector2.right;
+        if (Input.GetKey(KeyCode.W)) Direction += Vector2.up;
+        if (Input.GetKey(KeyCode.A)) Direction += Vector2.left;
+        if (Input.GetKey(KeyCode.S)) Direction += Vector2.down;
+        if (Input.GetKey(KeyCode.D)) Direction += Vector2.right;
 
         if (GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("warven_idle_back_left")) exitIndex = 0;
         if (GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("warven_idle_back_right")) exitIndex = 1;
         if (GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("warven_idle_front_left")) exitIndex = 2;
         if (GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("warven_idle_front_right")) exitIndex = 3;
+
+        if (IsMoving) StopAttack();
     }
 
     //public void SetLimits(Vector3 min, Vector3 max)
@@ -72,9 +74,9 @@ public class Player : Character
 
         Spell newSpell = spellBook.CastSpell(spellIndex);
 
-        isAttacking = true;
+        IsAttacking = true;
 
-        myAnimator.SetBool("attack", isAttacking);
+        MyAnimator.SetBool("attack", IsAttacking);
 
         yield return new WaitForSeconds(newSpell.CastTime);
 
@@ -91,7 +93,7 @@ public class Player : Character
     {
         Block();
 
-        if (MyTarget != null && !isAttacking && !IsMoving && InLineOfSight()) attackRoutine = StartCoroutine(Attack(spellIndex));
+        if (MyTarget != null && !IsAttacking && !IsMoving && InLineOfSight()) attackRoutine = StartCoroutine(Attack(spellIndex));
     }
 
     private bool InLineOfSight()
@@ -118,10 +120,17 @@ public class Player : Character
         blocks[exitIndex].Activate();
     }
 
-    public override void StopAttack()
+    public void StopAttack()
     {
         spellBook.StopCasting();
 
-        base.StopAttack();
+        IsAttacking = false;
+
+        MyAnimator.SetBool("attack", IsAttacking);
+
+        if (attackRoutine != null)
+        {
+            StopCoroutine(attackRoutine);
+        }
     }
 }
