@@ -4,31 +4,29 @@ using UnityEngine;
 
 public class Player : Character
 {
-    [SerializeField] private Stat health;
     [SerializeField] private Stat mana;
     [SerializeField] private Stat exp;
 
-    private float initHealth = 100;
     private float initMana = 50;
     private float initExp = 0;
-
-    [SerializeField] private GameObject[] spellPrefab;
-
+    
     [SerializeField] private Block[] blocks;
 
     [SerializeField] private Transform[] exitPoints;
+        
+    private int exitIndex = 3;
 
-    private int exitIndex;
+    private SpellBook spellBook;
 
-    private Transform target;
+    private Vector3 min, max;
+
+    public Transform MyTarget { get; set; }
 
     protected override void Awake()
     {
-        health.Initialize(initHealth, initHealth);
+        spellBook = GetComponent<SpellBook>();
         mana.Initialize(initMana, initMana);
         exp.Initialize(initExp, initExp);
-
-        target = GameObject.Find("Target").transform;
 
         base.Awake();
     }
@@ -36,6 +34,10 @@ public class Player : Character
     protected override void Update()
     {
         GetInput();
+
+        //transform.position = new Vector3(Mathf.Clamp(transform.position.x, min.x, max.x), 
+        //    Mathf.Clamp(transform.position.y, min.y, max.y), 
+        //    transform.position.z);
 
         base.Update();
     }
@@ -56,40 +58,52 @@ public class Player : Character
         if (GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("warven_idle_back_right")) exitIndex = 1;
         if (GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("warven_idle_front_left")) exitIndex = 2;
         if (GetComponent<Animator>().GetCurrentAnimatorStateInfo(0).IsName("warven_idle_front_right")) exitIndex = 3;
-
-        if (Input.GetKeyDown(KeyCode.Space)) 
-        {
-            Block();
-
-            if (!isAttacking && !IsMoving && InLineOfSight()) attackRoutine = StartCoroutine(Attack());
-        }
     }
 
-    private IEnumerator Attack()
+    //public void SetLimits(Vector3 min, Vector3 max)
+    //{
+    //    this.min = min;
+    //    this.max = max;
+    //}
+
+    private IEnumerator Attack(int spellIndex)
     {
+        Transform currentTarget = MyTarget;
+
+        Spell newSpell = spellBook.CastSpell(spellIndex);
+
         isAttacking = true;
 
         myAnimator.SetBool("attack", isAttacking);
 
-        yield return new WaitForSeconds(3);
+        yield return new WaitForSeconds(newSpell.CastTime);
 
-        CastSpell();
+        if (MyTarget != null && InLineOfSight())
+        {
+            SpellScript s = Instantiate(newSpell.SpellPrefab, exitPoints[exitIndex].position, Quaternion.identity).GetComponent<SpellScript>();
+            s.Initialize(currentTarget, newSpell.Damage);
+        }
 
         StopAttack();
     }
 
-    public void CastSpell()
+    public void CastSpell(int spellIndex)
     {
-        Instantiate(spellPrefab[0], exitPoints[exitIndex].position, Quaternion.identity);
+        Block();
+
+        if (MyTarget != null && !isAttacking && !IsMoving && InLineOfSight()) attackRoutine = StartCoroutine(Attack(spellIndex));
     }
 
     private bool InLineOfSight()
     {
-        Vector3 targetDirection = (target.transform.position - transform.position).normalized;
+        if (MyTarget != null)
+        {
+            Vector3 targetDirection = (MyTarget.transform.position - transform.position).normalized;
 
-        RaycastHit2D hit = Physics2D.Raycast(transform.position, targetDirection, Vector2.Distance(transform.position, target.transform.position), 256);
+            RaycastHit2D hit = Physics2D.Raycast(transform.position, targetDirection, Vector2.Distance(transform.position, MyTarget.transform.position), 256);
 
-        if (hit.collider == null) return true;
+            if (hit.collider == null) return true;                       
+        }
 
         return false;
     }
@@ -102,5 +116,12 @@ public class Player : Character
         }
 
         blocks[exitIndex].Activate();
+    }
+
+    public override void StopAttack()
+    {
+        spellBook.StopCasting();
+
+        base.StopAttack();
     }
 }

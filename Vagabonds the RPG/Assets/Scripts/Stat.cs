@@ -14,7 +14,7 @@ public class Stat : MonoBehaviour
     private float currentFill;
     public float MyMaxValue { get; set; }
 
-    public bool IsPercent;
+    private bool IsPercent; // jelenlegi érték/érték vagy % érték váltás
 
     private float currentValue;
     public float MyCurrentValue {
@@ -26,7 +26,8 @@ public class Stat : MonoBehaviour
 
             currentFill = currentValue / MyMaxValue;
 
-            if (!IsPercent) statValue.text = currentValue + " / " + MyMaxValue;
+            if (statValue != null) if (!IsPercent) statValue.text = currentValue + " / " + MyMaxValue;
+            
             if (IsPercent)
             {
                 float tempValue = ((currentValue / MyMaxValue) * 100);
@@ -49,8 +50,11 @@ public class Stat : MonoBehaviour
 
     public void Initialize(float currentValue, float maxValue)
     {
+		if (content == null) content = GetComponent<Image>();
+		
         MyMaxValue = maxValue;
         MyCurrentValue = currentValue;
+		content.fillAmount = MyCurrentValue / MyMaxValue;
     }
 
     public void ClickToStat()
@@ -65,8 +69,6 @@ public class Stat : MonoBehaviour
 
             if (tempValue != tempValue || tempValue <= 0) statValue.text = 0 + "%";
             else statValue.text = ((currentValue / MyMaxValue) * 100) + "%";
-
-            Debug.Log(tempValue);
         }
     }
 }

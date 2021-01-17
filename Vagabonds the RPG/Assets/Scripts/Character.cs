@@ -2,9 +2,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+
+[RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Animator))]
 public abstract class Character : MonoBehaviour // Az abstract megakadályozza azt, hogy ne húzd rá semmire véletlenül ezt a scriptet
 {
-    [SerializeField] private float speed;
+    [SerializeField] protected float speed;
+
+    [SerializeField] private float initHealth;
 
     protected Animator myAnimator;
 
@@ -16,6 +21,15 @@ public abstract class Character : MonoBehaviour // Az abstract megakadályozza az
 
     protected Coroutine attackRoutine;
 
+    [SerializeField] protected Transform hitBox;
+
+    [SerializeField] protected Stat health;
+	
+	public Stat Health
+	{
+		get { return health; }
+	}
+
     public bool IsMoving
     {
         get
@@ -26,6 +40,8 @@ public abstract class Character : MonoBehaviour // Az abstract megakadályozza az
 
     protected virtual void Awake()
     {
+        health.Initialize(initHealth, initHealth);
+
         myRigidbody = GetComponent<Rigidbody2D>();
         myAnimator = GetComponent<Animator>();
     }
@@ -76,7 +92,7 @@ public abstract class Character : MonoBehaviour // Az abstract megakadályozza az
         myAnimator.SetLayerWeight(myAnimator.GetLayerIndex(layerName), 1);
     }
 
-    public void StopAttack()
+    public virtual void StopAttack()
     {
         if (attackRoutine != null)
         {
@@ -84,5 +100,12 @@ public abstract class Character : MonoBehaviour // Az abstract megakadályozza az
             isAttacking = false;
             myAnimator.SetBool("attack", isAttacking);
         }
+    }
+
+    public virtual void TakeDamage(float damage)
+    {
+        health.MyCurrentValue -= damage;
+
+        if (health.MyCurrentValue <= 0) myAnimator.SetTrigger("die"); // DIE
     }
 }

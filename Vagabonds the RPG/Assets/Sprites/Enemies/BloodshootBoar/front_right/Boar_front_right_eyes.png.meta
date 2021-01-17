@@ -80,7 +80,12 @@ TextureImporter:
     sprites: []
     outline: []
     physicsShape: []
-    bones: []
+    bones:
+    - name: bone_1
+      position: {x: -32.708675, y: 17.110386, z: 0}
+      rotation: {x: 0, y: 0, z: -0.02164469, w: 0.99976575}
+      length: 77.53203
+      parentId: -1
     spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
